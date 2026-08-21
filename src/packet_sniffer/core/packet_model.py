@@ -35,7 +35,10 @@ class Packet:
         '''
         converts packet into a dict to be stored in SQL or JSON
         '''
-        pass
+        data = asdict(self)
+        data['timestamp'] = self.timestamp.isoformat()
+        data['protocol'] = self.protocol.value
+        return data
 
 
 
@@ -43,4 +46,14 @@ class Packet:
         '''
         Rebuilds a Packet object from a dict (from SQL or JSON)
         '''
-        pass
+        return cls(
+            timestamp=datetime.fromisoformat(data['timestamp']),
+            src_ip=data['src_ip'],
+            dst_ip=data['dst_ip'],
+            protocol=Protocol(data['protocol']),
+            length=data['length'],
+            src_port=data.get('src_port'),
+            dst_port=data.get('dst_port'),
+            flags=data.get('flags'),
+            summary=data.get('summary', '')
+        )
