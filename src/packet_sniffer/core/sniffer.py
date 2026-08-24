@@ -1,8 +1,16 @@
-from packet_sniffer.core.packet_model import Packet
+import logging
 from collections.abc import Callable
+from datetime import datetime, timezone
+
+from packet_sniffer.core.packet_model import Packet, Protocol
+
+from scapy.all import sniff, Packet as ScapyPacket
+from scapy.layers.inet import IP, TCP, UDP
 
 
 
+
+logger = logging.getLogger(__name__)
 
 PacketHandler = Callable[[Packet], None]
 
@@ -38,5 +46,64 @@ class PacketSniffer:
         '''
         starts capturing packets until stopped
         '''
-        pass
+        logger.info(
+            'Starting capture on interface=%s filter=%r count=%s',
+            self.interface or 'default',
+            self.bpf_filter,
+            self.packet_count or 'unlimited'
+        )
 
+        try:
+            sniff(
+                iface=self.interface,
+                filter=self.bpf_filter,
+                prn=self._on_packet,
+                count=self.packet_count,
+                store=False
+            )
+        except:
+            logger.error()
+            raise
+
+
+    def _on_packet(self, raw_packet: ScapyPacket) -> None:
+        '''
+        converts raw packet and forwards it to handler
+        '''
+        packet = self._translate(raw_packet)
+        if packet is None:
+            return
+        self._packets_captured += 1
+        self.callback(packet)
+
+
+    def _translate(raw_packet: ScapyPacket) -> Packet | None:
+        '''
+        convers the raw Scapy packet into our Packet model.
+        will return None if the type we don't handle yet
+        '''
+        timestamp = datetime.now(timezone.utc)
+        length = len(raw_packet)
+
+        if not raw_packet.haslayer(IP):
+            return None
+
+        ip_layer = raw_packet[IP]
+        src_ip = ip_layer.src
+        dst_ip = ip_layer.dst
+        
+
+        if raw_packet.haslayer(TCP):
+            return
+
+        if raw_packet.haslayer(UDP):
+            return
+
+        return Packet(
+            timestamp=timestamp,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            protocol=Protocol.OTHER,
+            length=length,
+            summary=f'Other {src_ip} -> {dst_ip}'
+        )
