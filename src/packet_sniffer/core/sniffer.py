@@ -2,10 +2,11 @@ import logging
 from collections.abc import Callable
 from datetime import datetime, timezone
 
-from packet_sniffer.core.packet_model import Packet, Protocol
-
 from scapy.all import sniff, Packet as ScapyPacket
-from scapy.layers.inet import IP, TCP, UDP
+from scapy.layers.inet import IP, TCP, UDP, ICMP
+from scapy.layers.l2 import ARP
+
+from packet_sniffer.core.packet_model import Packet, Protocol
 
 
 
@@ -77,6 +78,7 @@ class PacketSniffer:
         self.callback(packet)
 
 
+    @staticmethod
     def _translate(raw_packet: ScapyPacket) -> Packet | None:
         '''
         convers the raw Scapy packet into our Packet model.
@@ -84,6 +86,19 @@ class PacketSniffer:
         '''
         timestamp = datetime.now(timezone.utc)
         length = len(raw_packet)
+
+
+        if raw_packet.haslayer(ARP):
+            arp=raw_packet[ARP]
+            return Packet(
+                timestamp=timestamp,
+                src_ip=arp.psrc,
+                dst_ip=arp.pdst,
+                protocol=Protocol.ARP,
+                length=length,
+                summary=f'ARP {arp.psrc} -> {arp.pdst}'
+            )
+
 
         if not raw_packet.haslayer(IP):
             return None
@@ -94,10 +109,45 @@ class PacketSniffer:
         
 
         if raw_packet.haslayer(TCP):
-            return
+            tcp = raw_packet[TCP]
+            flags = str(tcp.flags)
+            return Packet(
+                timestamp=timestamp,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                protocol=Protocol.TCP,
+                length=length,
+                src_port=tcp.sport,
+                dst_port=tcp.dport,
+                flags=flags,
+                summary=f'TCP {src_ip}:{tcp.sport} -> {dst_ip}:{tcp.dport} [{flags}]'
+            )
+
 
         if raw_packet.haslayer(UDP):
-            return
+            udp = raw_packet[UDP]
+            return Packet(
+                timestamp=timestamp,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                protocol=Protocol.UDP,
+                length=length,
+                src_port=udp.sport,
+                dst_port=udp.dport,
+                summary=f'UDP {src_ip}:{udp.sport} -> {dst_ip}:{udp.dport}'
+            )
+
+
+        if raw_packet.haslayer(ICMP):
+            return Packet(
+                timestamp=timestamp,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                protocol=Protocol.ICMP,
+                length=length,
+                summary=f'ICMP {src_ip} -> {dst_ip}'
+            )
+
 
         return Packet(
             timestamp=timestamp,

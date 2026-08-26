@@ -9,8 +9,10 @@ class Protocol(str, Enum):
     '''
     supported protocol labels
     '''
+    ARP = 'ARP'
     TCP = 'TCP'
     UDP = 'UDP'
+    ICMP = 'ICMP'
     OTHER = 'OTHER'
 
 
