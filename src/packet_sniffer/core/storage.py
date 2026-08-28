@@ -42,6 +42,9 @@ class PacketStorage:
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
+        '''
+        Gets and yields a connection and makes sure that is closes when it's done with
+        '''
         conn = sqlite3.connect(self.db_path, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
@@ -59,18 +62,35 @@ class PacketStorage:
 
 
     def save(self, packet: Packet) -> None:
+        '''
+        saves one packet into the database
+        '''
         data = packet.to_dict()
-        # insert packet info into database
-        pass
+        with self._connect() as conn:
+            conn.execute(
+                '''
+                INSERT INTO packets
+                    (timestamp, src_ip, dst_ip, protocol, length, src_port, dst_port, flags, summary)
+                VALUES
+                    (:timestamp, :src_ip, :dst_ip, :protocol, :length, :src_port, :dst_port, :flags, :summary)
+                ''',
+                data
+            )
 
 
     def total_count(self) -> int:
+        '''
+        returns the total amount of packets captured
+        '''
         with self._connect() as conn:
             row = conn.execute('SELECT COUNT(*) as total FROM packets').fetchone()
         return row['total']
 
 
     def clear(self) -> None:
+        '''
+        deletes all captured packets
+        '''
         with self._connect() as conn:
             conn.execute('DELETE FROM packets')
         logger.info('Cleared all packets from %s', self.db_path)
