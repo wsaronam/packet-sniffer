@@ -1,0 +1,27 @@
+# virtual environment
+venv/
+env/
+
+
+# captured network data - never commit real traffic
+*.db
+*.db-journal
+logs/
+captures/
+
+
+# python bytecode cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+
+# IDE
+.vscode/
+.idea/
+
+
+# OS
+.DS_Store
+Thumbs.db

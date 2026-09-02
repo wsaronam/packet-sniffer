@@ -32,11 +32,38 @@ def build_arg_parser() -> argparse.ArgumentParser:
             'Defaults to Scapy default interface',
         default=None
     )
+    parser.add_argument(
+        '-f', '--filter',
+        dest='bpf_filter',
+        help='Berkeley Packet Filter expression ex "tcp port 443"',
+        default=None
+    )
+    parser.add_argument(
+        '-c', '--count',
+        type=int,
+        default=0,
+        help='Number of packets to capture before stopping (0 = unlimited)'
+    )
+    parser.add_argument(
+        '--db',
+        default='packets.db',
+        help='Path to SQL db file (default: packets.db)'
+    )
+    parser.add_argument(
+        '--clear-db',
+        action='store_true',
+        help='Clear all stored packets from the database'
+    )
+    parser.add_argument(
+        '--list-interfaces',
+        action='store_true',
+        help='List all available network interfaces'
+    )
 
     return parser
 
 
-def print_interfaces() -> None:
+def list_interfaces() -> None:
     '''
     prints available interfaces for user to pick
     '''
@@ -50,8 +77,8 @@ def main() -> None:
     parser = build_arg_parser()
     args = parser.parse_args()
 
-    if args.print_interfaces:
-        print_interfaces()
+    if args.list_interfaces:
+        list_interfaces()
         return
 
     storage = PacketStorage(args.db)
@@ -63,13 +90,13 @@ def main() -> None:
 
 
     print('Packet Sniffer - press Ctrl+C to stop')
-    print(f'Saving captures to: {args.db}')
+    print(f'Saving captures to: {args.db}\n')
 
     sniffer = PacketSniffer(
-        callback='',
-        interface='',
-        bpf_filter='',
-        packet_count=''
+        callback=make_packet_handler(storage),
+        interface=args.interface,
+        bpf_filter=args.bpf_filter,
+        packet_count=args.count
     )
 
     try:
@@ -83,7 +110,7 @@ def main() -> None:
         pass
     finally:
         total = storage.total_count()
-        print(f'Capture stopped.  {total} packet(s) total')
+        print(f'\nCapture stopped.  {total} packet(s) total')
 
 
 

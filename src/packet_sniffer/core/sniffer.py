@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from scapy.all import sniff, Packet as ScapyPacket
 from scapy.layers.inet import IP, TCP, UDP, ICMP
+from scapy.layers.inet6 import IPv6
 from scapy.layers.l2 import ARP
 
 from packet_sniffer.core.packet_model import Packet, Protocol
@@ -100,13 +101,26 @@ class PacketSniffer:
             )
 
 
-        if not raw_packet.haslayer(IP):
+        if raw_packet.haslayer(IP):
+            ip_layer = raw_packet[IP]
+        elif raw_packet.haslayer(IPv6):
+            ip_layer = raw_packet[IPv6]
+        else:
             return None
 
-        ip_layer = raw_packet[IP]
         src_ip = ip_layer.src
         dst_ip = ip_layer.dst
         
+
+        if raw_packet.haslayer(IPv6) and ip_layer.nh == 58: #58 == ICMPv6
+            return Packet(
+                timestamp=timestamp,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                protocol=Protocol.ICMPV6,
+                length=length,
+                summary=f'ICMPv6 {src_ip} -> {dst_ip}'
+            )
 
         if raw_packet.haslayer(TCP):
             tcp = raw_packet[TCP]

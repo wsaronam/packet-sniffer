@@ -1,5 +1,5 @@
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime
 
 
@@ -13,6 +13,7 @@ class Protocol(str, Enum):
     TCP = 'TCP'
     UDP = 'UDP'
     ICMP = 'ICMP'
+    ICMPV6 = 'ICMPv6'
     OTHER = 'OTHER'
 
 
@@ -43,8 +44,8 @@ class Packet:
         return data
 
 
-
-    def from_dict(cls, data: dict) -> Packet:
+    @classmethod
+    def from_dict(cls, data: dict) -> "Packet":
         '''
         Rebuilds a Packet object from a dict (from SQL or JSON)
         '''
