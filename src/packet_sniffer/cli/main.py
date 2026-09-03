@@ -6,17 +6,19 @@ from scapy.all import get_if_list
 from packet_sniffer.core.packet_model import Packet
 from packet_sniffer.core.sniffer import PacketSniffer
 from packet_sniffer.core.storage import PacketStorage
+from packet_sniffer.cli.formatter import PacketFormatter
 
 
 
 
-def make_packet_handler(storage: PacketStorage):
+def make_packet_handler(storage: PacketStorage, formatter: PacketFormatter):
     '''
     returns callback function that saves the packet to storage
     '''
     def handle_packet(packet: Packet) -> None:
         pak = packet.timestamp.strftime('%H:%M:%S.%f')[:-3]
         print(f'[{pak}] {packet.summary} ({packet.length} bytes)')
+        # formatter.print_packet(packet)
         storage.save(packet)
     return handle_packet
 
@@ -82,18 +84,17 @@ def main() -> None:
         return
 
     storage = PacketStorage(args.db)
+    formatter = PacketFormatter()
 
     if args.clear_db:
         storage.clear()
         print(f'Cleared all packets from {args.db}')
         return
 
-
-    print('Packet Sniffer - press Ctrl+C to stop')
-    print(f'Saving captures to: {args.db}\n')
+    formatter.print_banner(args.db)
 
     sniffer = PacketSniffer(
-        callback=make_packet_handler(storage),
+        callback=make_packet_handler(storage, formatter),
         interface=args.interface,
         bpf_filter=args.bpf_filter,
         packet_count=args.count
@@ -111,9 +112,16 @@ def main() -> None:
     finally:
         total = storage.total_count()
         print(f'\nCapture stopped.  {total} packet(s) total')
+        # formatter.print_summary(total)
 
 
 
 
 if __name__ == '__main__':
     main()
+
+
+
+# testing purposes
+# $env:PYTHONPATH = "src"
+# python -m packet_sniffer.cli.main
