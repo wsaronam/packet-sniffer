@@ -2,6 +2,8 @@ from packet_sniffer.core.packet_model import Packet, Protocol
 
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 
 
@@ -49,8 +51,28 @@ class PacketFormatter:
 
 
     def print_packet(self, packet: Packet) -> None:
-        return
+        style = PROTOCOL_STYLES.get(packet.protocol, 'white')
+        pak = packet.timestamp.strftime('%H:%M:%S.%f')[:-3]
+
+        line = Text()
+
+        #put stuff here
+
+        self.console.print(line)
 
 
-    def print_summary(self, total: int) -> None:
-        return
+    def print_summary(self, total: int, by_protocol: dict[str, int]) -> None:
+        table = Table(title='Capture Summary', show_header=True, header_style='bold blue')
+        table.add_column('Protocol')
+        table.add_column('Count', justify='right')
+        table.add_column('Share', justify='right')
+
+        for proto, count in by_protocol.items():
+            pct = (count / total * 100) if total else 0
+            style = PROTOCOL_STYLES.get(Protocol(proto), 'white')
+            table.add_row(f'[{style}]{proto}[/{style}]', str(count), f'{pct:.1f}%')
+
+        self.console.print()
+        self.console.print(table)
+        self.console.print(f'[bold]Total:[/bold] {total} packet(s)')
+        

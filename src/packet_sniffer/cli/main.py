@@ -111,8 +111,8 @@ def main() -> None:
         pass
     finally:
         total = storage.total_count()
-        print(f'\nCapture stopped.  {total} packet(s) total')
-        # formatter.print_summary(total)
+        by_protocol = storage.count_by_protocol()
+        formatter.print_summary(total, by_protocol)
 
 
 

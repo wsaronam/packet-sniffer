@@ -87,6 +87,15 @@ class PacketStorage:
         return row['total']
 
 
+    def count_by_protocol(self) -> dict[str, int]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                'SELECT protocol, COUNT(*) as total FROM packets '
+                'GROUP BY protocol ORDER BY total DESC'
+            ).fetchall()
+        return {row['protocol']: row['total'] for row in rows}
+
+
     def clear(self) -> None:
         '''
         deletes all captured packets
