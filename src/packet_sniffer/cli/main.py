@@ -16,9 +16,9 @@ def make_packet_handler(storage: PacketStorage, formatter: PacketFormatter):
     returns callback function that saves the packet to storage
     '''
     def handle_packet(packet: Packet) -> None:
-        pak = packet.timestamp.strftime('%H:%M:%S.%f')[:-3]
-        print(f'[{pak}] {packet.summary} ({packet.length} bytes)')
-        # formatter.print_packet(packet)
+        # pak = packet.timestamp.strftime('%H:%M:%S.%f')[:-3]
+        # print(f'[{pak}] {packet.summary} ({packet.length} bytes)')
+        formatter.print_packet(packet)
         storage.save(packet)
     return handle_packet
 

@@ -29,6 +29,14 @@ PORT_NAMES = {
 }
 
 
+def _port_label(port: int | None) -> str:
+    if port is None:
+        return ''
+    else:
+        name = PORT_NAMES.get(port)
+        return f'{port} ({name})' if name else str(port)
+
+
 
 
 class PacketFormatter:
@@ -54,9 +62,25 @@ class PacketFormatter:
         style = PROTOCOL_STYLES.get(packet.protocol, 'white')
         pak = packet.timestamp.strftime('%H:%M:%S.%f')[:-3]
 
-        line = Text()
 
-        #put stuff here
+        line = Text()
+        line.append(f'{pak}  ', style='dim')
+        line.append(f'{packet.protocol.value:<7}', style=f'bold {style}')
+
+        if packet.src_port or packet.dst_port:
+            endpoint = (
+                f'{packet.src_ip}:{_port_label(packet.src_port)}'
+                f' \u2192 {packet.dst_ip}:{_port_label(packet.dst_port)}'
+            )
+        else:
+            endpoint = f'{packet.src_ip} \u2192 {packet.dst_ip}'
+        line.append(endpoint, style=style)
+
+        if packet.flags:
+            line.append(f'  [{packet.flags}]', style='dim')
+
+        line.append(f'  {packet.length}B', style='dim')
+
 
         self.console.print(line)
 
