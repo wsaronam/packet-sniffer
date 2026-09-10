@@ -1,4 +1,5 @@
 from packet_sniffer.core.packet_model import Packet, Protocol
+from packet_sniffer.core.detector import Alert
 
 from rich.console import Console
 from rich.panel import Panel
@@ -83,6 +84,22 @@ class PacketFormatter:
 
 
         self.console.print(line)
+
+
+
+    def print_alert(self, alert: Alert) -> None:
+        '''
+        prints the detected security event and make it look different from other packet lines
+        '''
+        pak = alert.timestamp.strftime('%H:%M:%S.%f')[:-3]
+        self.console.print(
+            Panel(
+                f'[bold]{alert.alert_type}[/bold]  {alert.description}',
+                title=f'\u26a0 ALERT  [{pak}]',
+                border_style='bold red',
+                style='red'
+            )
+        )
 
 
     def print_summary(self, total: int, by_protocol: dict[str, int]) -> None:

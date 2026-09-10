@@ -7,19 +7,21 @@ from packet_sniffer.core.packet_model import Packet
 from packet_sniffer.core.sniffer import PacketSniffer
 from packet_sniffer.core.storage import PacketStorage
 from packet_sniffer.cli.formatter import PacketFormatter
+from packet_sniffer.core.detector import PortScanDetector
 
 
 
 
-def make_packet_handler(storage: PacketStorage, formatter: PacketFormatter):
+def make_packet_handler(storage: PacketStorage, formatter: PacketFormatter, detector: PortScanDetector):
     '''
     returns callback function that saves the packet to storage
     '''
     def handle_packet(packet: Packet) -> None:
-        # pak = packet.timestamp.strftime('%H:%M:%S.%f')[:-3]
-        # print(f'[{pak}] {packet.summary} ({packet.length} bytes)')
         formatter.print_packet(packet)
         storage.save(packet)
+        # alert = detector.check(packet)
+        # if alert:
+        #     formatter.print_alert(alert)
     return handle_packet
 
 
@@ -85,6 +87,7 @@ def main() -> None:
 
     storage = PacketStorage(args.db)
     formatter = PacketFormatter()
+    detector = PortScanDetector()
 
     if args.clear_db:
         storage.clear()
@@ -94,7 +97,7 @@ def main() -> None:
     formatter.print_banner(args.db)
 
     sniffer = PacketSniffer(
-        callback=make_packet_handler(storage, formatter),
+        callback=make_packet_handler(storage, formatter, detector),
         interface=args.interface,
         bpf_filter=args.bpf_filter,
         packet_count=args.count
