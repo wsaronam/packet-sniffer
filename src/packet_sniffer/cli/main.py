@@ -19,9 +19,9 @@ def make_packet_handler(storage: PacketStorage, formatter: PacketFormatter, dete
     def handle_packet(packet: Packet) -> None:
         formatter.print_packet(packet)
         storage.save(packet)
-        # alert = detector.check(packet)
-        # if alert:
-        #     formatter.print_alert(alert)
+        alert = detector.check(packet)
+        if alert:
+            formatter.print_alert(alert)
     return handle_packet
 
 
