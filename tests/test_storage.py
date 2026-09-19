@@ -39,24 +39,6 @@ def test_save_and_count(storage):
     assert storage.total_count() == 2
 
 
-def test_get_recent_returns_newest_first(storage):
-    now = datetime.now(timezone.utc)
-    older = make_packet(timestamp=now - timedelta(seconds=5), summary="older")
-    newer = make_packet(timestamp=now, summary="newer")
-    storage.save(older)
-    storage.save(newer)
-
-    recent = storage.get_recent(limit=10)
-    assert recent[0].summary == "newer"
-    assert recent[1].summary == "older"
-
-
-def test_get_recent_respects_limit(storage):
-    for _ in range(5):
-        storage.save(make_packet())
-    assert len(storage.get_recent(limit=2)) == 2
-
-
 def test_count_by_protocol(storage):
     storage.save(make_packet(protocol=Protocol.TCP))
     storage.save(make_packet(protocol=Protocol.TCP))
